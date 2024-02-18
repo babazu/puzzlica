@@ -94,8 +94,8 @@ const puzzles = {
     "15_BorelliM": { 
         key: "p15",
         type: PuzzleType.Rotate, 
-        columns: 3,/*9 9*/
-        rows: 6,
+        columns: 2,/*9 9*/
+        rows: 4,
     },
     "16_Ifigenia": { 
         key: "p16",

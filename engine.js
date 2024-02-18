@@ -236,15 +236,14 @@ var puzzleManager = {
         const filename = currentUTCDate + '.jpg';   
         console.log('image',filename);
 
-        // Create puzzle from one image by setting the background image and background position of each piece
-
-        // Calculate the size of the entire image based on the size of a single piece and the number of pieces in a row/column  
- 
-
         // Create the puzzle pieces and add them to the container
         for (var i = 1; i <= puzzleManager.puzzlePiecesCount; i++) {
             var puzzlePiece = document.createElement('div');
             puzzlePiece.className = 'puzzle-piece';
+            puzzlePiece.draggable = true;
+            puzzlePiece.addEventListener('dragstart', puzzleManager.dragStart);  
+            puzzlePiece.addEventListener('dragover', puzzleManager.dragOver);  
+            puzzlePiece.addEventListener('drop', puzzleManager.drop);  
 
             // Set image
             puzzlePiece.style.backgroundImage = `url(puzzles/${filename})`;
@@ -265,7 +264,6 @@ var puzzleManager = {
 
         // Resize
         puzzleManager.updatePuzzlePieceSizes();
-        window.addEventListener('resize', puzzleManager.updatePuzzlePieceSizes);  
 
         // Get size of puzzle pieces
         puzzleManager.puzzlePieceWidth = container.offsetWidth/puzzleManager.puzzleSizeColumns;  
@@ -296,7 +294,7 @@ var puzzleManager = {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap ){
               puzzleManager.puzzlePieces[j].addEventListener('click', puzzleManager.swapListener);
             }
-          }
+        }
     },
     closePuzzle: function(){
         //remove listeners
@@ -374,7 +372,26 @@ var puzzleManager = {
             puzzleManager.puzzlePieces[i].style.backgroundSize = imageWidth + 'px ' + imageHeight + 'px';  
         } 
     },
-    
+    dragStart: function(e) {  
+        e.dataTransfer.setData('text/plain', e.target.style.backgroundPosition);  
+        e.dataTransfer.effectAllowed = 'move';  
+    },  
+    dragOver: function(e) {  
+        e.preventDefault();  
+        e.dataTransfer.dropEffect = 'move';  
+    },  
+    drop: function(e) {  
+        e.preventDefault();  
+        var data = e.dataTransfer.getData('text');  
+        var from = document.querySelector(`[style*='${data}']`);  
+        from.style.backgroundPosition = e.target.style.backgroundPosition;  
+        e.target.style.backgroundPosition = data;  
+        
+        // Check win
+        if (puzzleManager.isPuzzleInWinningState()) {
+            puzzleManager.puzzleWin();
+        }
+    },
 }
 
 
