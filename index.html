@@ -8,7 +8,7 @@
   <link rel="icon" href="data:,">
 </head>
 <body>
-  <script src="DragDropTouch.js"></script>
+  
 
   <div class="content">  
     <div class="header">  
@@ -16,9 +16,12 @@
         <button id="help-button" class="icon" aria-label="help">
           <game-icon icon="help"></game-icon>
         </button>
+        <button id="help-button" class="icon" aria-label="help">
+          <game-icon icon="help"></game-icon>
+        </button>
       </div>
       <div class="title">
-      PUZZLICA
+        PUZZLICA
       </div>
       <div class="menu">
         <button id="statistics-button" class="icon" aria-label="statistics">
@@ -30,14 +33,21 @@
       </div>
     </div>
     
-    <div id="puzzle-container" ></div> 
+    <div id="puzzle-container"></div> 
+
+    <div class="footer">
+      <div id="counter">
+        0
+      </div>
+    </div>
   </div>  
 
   <div class="large-heart-animation">
     <img id="large-heart-image" src="graphic/heart-green-full.png">
   </div>
 
-<script src="./engine.js" type="module"></script>
+  <script src="./drag-drop-touch.min.js"></script>
+  <script src="./engine.js" type="module"></script>
   
 </body>
 </html>

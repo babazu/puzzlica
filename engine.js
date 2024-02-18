@@ -88,6 +88,8 @@ var puzzleManager = {
     puzzleType: null, //puzzleType: swap, rotate
     puzzlePieceWidth: 0,
     puzzlePieceHeight: 0,
+    dragSrcEl: null,
+    counter: 0,
     
     startPuzzleGame: function(puzzleId, puzzleType) {
         console.log("starting puzzle:", puzzleId);
@@ -113,9 +115,6 @@ var puzzleManager = {
         e.preventDefault(); // Prevent the default context menu behavior
         puzzleManager.onRotatePiece(this);
     },
-    swapListener: function(e) {
-        puzzleManager.onSwapPiece(this);
-    },
     shufflePuzzlePieces: function() {
         for (var i = puzzleManager.puzzlePieces.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
@@ -129,41 +128,6 @@ var puzzleManager = {
         puzzleManager.puzzlePieces.forEach(function (piece) {
           container.appendChild(piece);
         });
-    },
-    onSwapPiece: function(piece) {
-        if (piece.classList.contains('selected')) {
-          piece.classList.remove('selected');
-        } else {
-            var selectedPieces = document.querySelectorAll('.selected');
-
-            // Check if two pieces are already selected
-            if (selectedPieces.length === 1) {
-                // Swap the positions of the selected piece and the current piece
-                var firstPiece = selectedPieces[0];
-
-                // Add swapping class to trigger the animation
-                firstPiece.classList.add('puzzle-swapping');
-                piece.classList.add('puzzle-swapping');
-
-                // Swap the positions of the selected piece and the current piece
-                setTimeout(function () {
-                    var tempBackground = firstPiece.style.backgroundPosition;
-                    firstPiece.style.backgroundPosition = piece.style.backgroundPosition;
-                    piece.style.backgroundPosition = tempBackground;
-
-                    // Deselect the pieces and remove the swapping class
-                    firstPiece.classList.remove('selected', 'puzzle-swapping');
-                    piece.classList.remove('selected', 'puzzle-swapping');
-
-                    // Check win
-                    if (puzzleManager.isPuzzleInWinningState()) {
-                        puzzleManager.puzzleWin();
-                    }
-                }, 100); // Wait for the animation duration before actually swapping the images
-            } else {
-              piece.classList.add('selected');
-            }
-        }
     },
     onRotatePiece: function(piece) {
         var currentRotation = parseInt(piece.dataset.rotation);
@@ -212,8 +176,6 @@ var puzzleManager = {
         for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate) {
                 puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.rotateListener);
-            } else if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap) {
-                puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.swapListener);
             }
         }
 
@@ -235,7 +197,9 @@ var puzzleManager = {
             var puzzlePiece = document.createElement('div');
             puzzlePiece.className = 'puzzle-piece';
             puzzlePiece.id = 'puzzle-piece-' + i;  
-            puzzlePiece.draggable = true;
+            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
+                puzzlePiece.draggable = true;
+            }
 
             // Set image
             puzzlePiece.style.backgroundImage = `url(puzzles/${filename})`;
@@ -261,8 +225,6 @@ var puzzleManager = {
         puzzleManager.puzzlePieceWidth = container.offsetWidth/puzzleManager.puzzleSizeColumns;  
         puzzleManager.puzzlePieceHeight = puzzleManager.puzzlePieceWidth; 
 
-        //console.log('puzzleManager.puzzlePieceWidth .puzzlePieceHeight',puzzleManager.puzzlePieceWidth,puzzleManager.puzzlePieceHeight);
-         
         // Create images for pieces by offsetting the background image
         for (var i = 0; i < puzzleManager.puzzlePieces.length; i++) {  
             // Calculate the position of the current piece in the image  
@@ -278,83 +240,87 @@ var puzzleManager = {
             puzzleManager.shufflePuzzlePieces();
         }
 
-        // DragDropTouch
-        let cols = document.querySelectorAll('.puzzle-piece');
-        [].forEach.call(cols, function (col) {
-            col.addEventListener('dragstart', handleDragStart, false);
-            col.addEventListener('dragenter', handleDragEnter, false)
-            col.addEventListener('dragover', handleDragOver, false);
-            col.addEventListener('dragleave', handleDragLeave, false);
-            col.addEventListener('drop', handleDrop, false);
-            col.addEventListener('dragend', handleDragEnd, false);
-        });
-
-        let dragSrcEl = null;
-        function handleDragStart(e) {
-            if (e.target.className.indexOf('puzzle-piece') > -1) {
-                dragSrcEl = e.target;
-                dragSrcEl.style.opacity = '0.75';
-                dragSrcEl.style.filter = 'blur(5px)';  
+        // Add click event listeners to the puzzle pieces (for rotation it's click, for swap it's drag-drop)
+        if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate){
+            for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
+                puzzleManager.puzzlePieces[j].addEventListener('click', puzzleManager.rotateListener);
             }
         }
-        function handleDragOver(e) {
-            if (dragSrcEl) {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-            }
-        }
-        function handleDragEnter(e) {
-            if (dragSrcEl) {
-                e.target.classList.add('over');
-            }
-        }
-        function handleDragLeave(e) {
-            if (dragSrcEl) {
-                e.target.classList.remove('over');
-            }
-        }
-        function handleDragEnd(e) {
-            dragSrcEl = null;
-            [].forEach.call(cols, function (col) {
-                col.style.opacity = '';
-                col.style.filter = '';
-                col.classList.remove('over');
+        if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
+            // DragDropTouch
+            [].forEach.call(puzzleManager.puzzlePieces, function (col) {
+                col.addEventListener('dragstart', puzzleManager.dragStart, false);
+                col.addEventListener('dragenter', puzzleManager.dragEnter, false)
+                col.addEventListener('dragover', puzzleManager.dragOver, false);
+                col.addEventListener('dragleave', puzzleManager.dragLeave, false);
+                col.addEventListener('drop', puzzleManager.dragDrop, false);
+                col.addEventListener('dragend', puzzleManager.dragEnd, false);
             });
         }
-        function handleDrop(e) {
-            if (dragSrcEl) {
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                e.preventDefault();
-                if (dragSrcEl != this) {
-                    swapDom(dragSrcEl, this);
-                    //dragSrcEl.innerHTML = e.target.innerHTML;
-                    //this.innerHTML = e.dataTransfer.getData('text');
-                }
-                // Check win
-                if (puzzleManager.isPuzzleInWinningState()) {
-                    puzzleManager.puzzleWin();
-                }
+    },
+    dragStart: function(e) {
+        if (e.target.className.indexOf('puzzle-piece') > -1) {
+            puzzleManager.dragSrcEl = e.target;
+            puzzleManager.dragSrcEl.style.opacity = '0.75';
+            puzzleManager.dragSrcEl.style.filter = 'blur(5px)';  
+        }
+    },
+    dragOver: function(e) {
+        if (puzzleManager.dragSrcEl) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+    },
+    dragEnter: function(e) {
+        if (puzzleManager.dragSrcEl) {
+            e.target.classList.add('over');
+        }
+    },
+    dragLeave: function(e) {
+        if (puzzleManager.dragSrcEl) {
+            e.target.classList.remove('over');
+        }
+    },
+    dragEnd: function(e) {
+        puzzleManager.dragSrcEl = null;
+        [].forEach.call(puzzleManager.puzzlePieces, function (col) {
+            col.style.opacity = '';
+            col.style.filter = '';
+            col.classList.remove('over');
+        });
+    },
+    dragDrop: function(e) {
+        if (puzzleManager.dragSrcEl) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            if (puzzleManager.dragSrcEl != this) {
+                puzzleManager.swapPieces(puzzleManager.dragSrcEl, this);
+                puzzleManager.counter++;
+            }
+            document.getElementById('counter').innerText = puzzleManager.counter;
+            
+            // Check win
+            if (puzzleManager.isPuzzleInWinningState()) {
+                puzzleManager.puzzleWin();
             }
         }
-        function swapDom(a,b) {
-            let aParent = a.parentNode;
-            let bParent = b.parentNode;
-            let aHolder = document.createElement("div");
-            let bHolder = document.createElement("div");
-            aParent.replaceChild(aHolder, a);
-            bParent.replaceChild(bHolder, b);
-            aParent.replaceChild(b, aHolder);
-            bParent.replaceChild(a, bHolder);    
-        }    
+    },
+    swapPieces: function(a,b) {
+        let aParent = a.parentNode;
+        let bParent = b.parentNode;
+        let aHolder = document.createElement("div");
+        let bHolder = document.createElement("div");
+        aParent.replaceChild(aHolder, a);
+        bParent.replaceChild(bHolder, b);
+        aParent.replaceChild(b, aHolder);
+        bParent.replaceChild(a, bHolder);    
     },
     closePuzzle: function(){
         //remove listeners
         for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate) {
                 puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.rotateListener);
-            } else if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap) {
-                puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.swapListener);
             }
         }
 
@@ -371,8 +337,6 @@ var puzzleManager = {
         for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate) {
                 puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.rotateListener);
-            } else if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap) {
-                puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.swapListener);
             }
         }
 

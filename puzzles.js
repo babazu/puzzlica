@@ -87,15 +87,15 @@ const puzzles = {
     "14_BorelliF": { 
         key: "p14",
         type: PuzzleType.Swap, 
-        columns: 2,/*9 9*/
+        columns: 12,/*9 9*/
         rows: 2,
 
     },
     "15_BorelliM": { 
         key: "p15",
         type: PuzzleType.Rotate, 
-        columns: 2,/*9 9*/
-        rows: 4,
+        columns: 3,/*9 9*/
+        rows: 6,
     },
     "16_Ifigenia": { 
         key: "p16",
