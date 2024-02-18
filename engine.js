@@ -185,7 +185,7 @@ var puzzleManager = {
     },
     isPuzzleInWinningState: function() {  
         var puzzlePieces = document.querySelectorAll('.puzzle-piece');  
-  
+
         for (var i = 0; i < puzzlePieces.length; i++) {  
             // Generate the expected ID for this position  
             var expectedId = 'puzzle-piece-' + (i + 1);  
@@ -206,39 +206,6 @@ var puzzleManager = {
       
         // If all puzzle pieces are in the correct position, the puzzle is in the winning state  
         return true; 
-        
-        
-        
-        /*
-        
-        for (var i = 0; i < puzzleManager.puzzlePieces.length; i++) {  
-            // check order
-            //ebugger;
-            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
-                var x = (i) % puzzleManager.puzzleSizeColumns;    
-                var y = Math.floor((i) / puzzleManager.puzzleSizeColumns);  
-                
-                var currentPosition = puzzleManager.puzzlePieces[i].style.backgroundPosition;  
-                currentPosition = currentPosition.split(' ');  
-                currentPosition = currentPosition.map(value => parseFloat(value).toFixed(3) + 'px');  
-                currentPosition = currentPosition.join(' '); 
-                
-                var expectedPosition = '-' + (x * puzzleManager.puzzlePieceWidth + 1).toFixed(3) + 'px -' + (y * puzzleManager.puzzlePieceHeight + 1).toFixed(3) + 'px';    
-                expectedPosition = expectedPosition.replace(/-0.000px/g, '0.000px');  
-      
-                if (currentPosition !== expectedPosition) {    
-                    return false;    
-                } 
-             }
-
-            // check rotation
-            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate){
-                if (parseInt(puzzleManager.puzzlePieces[i].dataset.rotation) % 360 !== 0) {
-                    return false;
-                }
-            }
-        }  
-        return true;  */
     },  
     shufflePuzzle: function(){
         //remove listeners
@@ -311,112 +278,75 @@ var puzzleManager = {
             puzzleManager.shufflePuzzlePieces();
         }
 
-
-
-
-/*--------------------------------------------------*/
-
-
-    // demonstrate standard HTML5 drag/drop.
-    // this is based on the html5rocks tutorial published here:
-    // http://www.html5rocks.com/en/tutorials/dnd/basics/
-
-    // hook up event handlers
-    let cols = document.querySelectorAll('.puzzle-piece');
-    [].forEach.call(cols, function (col) {
-        col.addEventListener('dragstart', handleDragStart, false);
-        col.addEventListener('dragenter', handleDragEnter, false)
-        col.addEventListener('dragover', handleDragOver, false);
-        col.addEventListener('dragleave', handleDragLeave, false);
-        col.addEventListener('drop', handleDrop, false);
-        col.addEventListener('dragend', handleDragEnd, false);
-    });
-
-    let dragSrcEl = null;
-    function handleDragStart(e) {
-
-/*
-        let stripes = document.createElement('style');  
-        stripes.innerHTML = `  
-            .striped-image::after {  
-                content: "";  
-                position: absolute;  
-                top: 0;  
-                right: 0;  
-                bottom: 0;  
-                left: 0;  
-                background: linear-gradient(45deg, rgba(255,255,255,.3) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.3) 75%, transparent 75%, transparent);  
-                background-size: 50px 50px;  
-            }  
-            `; 
-*/
-
-        if (e.target.className.indexOf('puzzle-piece') > -1) {
-            dragSrcEl = e.target;
-            dragSrcEl.style.opacity = '0.5';
-            //dragSrcEl.appendChild(stripes);
-            let dt = e.dataTransfer;
-            dt.effectAllowed = 'move';
-            dt.setData('text', dragSrcEl.innerHTML);
-
-            // customize drag image for one of the panels
-            if (dt.setDragImage instanceof Function && e.target.innerHTML.indexOf('X') > -1) {
-                let img = new Image();
-                img.src = 'puzzles\boy.jpg';
-                dt.setDragImage(img, img.width / 2, img.height / 2);
-            }
-        }
-    }
-    function handleDragOver(e) {
-        if (dragSrcEl) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        }
-    }
-    function handleDragEnter(e) {
-        if (dragSrcEl) {
-            e.target.classList.add('over');
-        }
-    }
-    function handleDragLeave(e) {
-        if (dragSrcEl) {
-            e.target.classList.remove('over');
-        }
-    }
-    function handleDragEnd(e) {
-        dragSrcEl = null;
+        // DragDropTouch
+        let cols = document.querySelectorAll('.puzzle-piece');
         [].forEach.call(cols, function (col) {
-            col.style.opacity = '';
-            col.classList.remove('over');
+            col.addEventListener('dragstart', handleDragStart, false);
+            col.addEventListener('dragenter', handleDragEnter, false)
+            col.addEventListener('dragover', handleDragOver, false);
+            col.addEventListener('dragleave', handleDragLeave, false);
+            col.addEventListener('drop', handleDrop, false);
+            col.addEventListener('dragend', handleDragEnd, false);
         });
-    }
-    function handleDrop(e) {
-        if (dragSrcEl) {
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            e.preventDefault();
-            if (dragSrcEl != this) {
-                swapDom(dragSrcEl, this);
-                //dragSrcEl.innerHTML = e.target.innerHTML;
-                //this.innerHTML = e.dataTransfer.getData('text');
+
+        let dragSrcEl = null;
+        function handleDragStart(e) {
+            if (e.target.className.indexOf('puzzle-piece') > -1) {
+                dragSrcEl = e.target;
+                dragSrcEl.style.opacity = '0.75';
+                dragSrcEl.style.filter = 'blur(5px)';  
             }
         }
-    }
-
-    // https://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
-    function swapDom(a,b) {
-        let aParent = a.parentNode;
-        let bParent = b.parentNode;
-        let aHolder = document.createElement("div");
-        let bHolder = document.createElement("div");
-        aParent.replaceChild(aHolder, a);
-        bParent.replaceChild(bHolder, b);
-        aParent.replaceChild(b, aHolder);
-        bParent.replaceChild(a, bHolder);    
-    }    
-/*--------------------------------------------------*/
-
-
+        function handleDragOver(e) {
+            if (dragSrcEl) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+        }
+        function handleDragEnter(e) {
+            if (dragSrcEl) {
+                e.target.classList.add('over');
+            }
+        }
+        function handleDragLeave(e) {
+            if (dragSrcEl) {
+                e.target.classList.remove('over');
+            }
+        }
+        function handleDragEnd(e) {
+            dragSrcEl = null;
+            [].forEach.call(cols, function (col) {
+                col.style.opacity = '';
+                col.style.filter = '';
+                col.classList.remove('over');
+            });
+        }
+        function handleDrop(e) {
+            if (dragSrcEl) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                if (dragSrcEl != this) {
+                    swapDom(dragSrcEl, this);
+                    //dragSrcEl.innerHTML = e.target.innerHTML;
+                    //this.innerHTML = e.dataTransfer.getData('text');
+                }
+                // Check win
+                if (puzzleManager.isPuzzleInWinningState()) {
+                    puzzleManager.puzzleWin();
+                }
+            }
+        }
+        function swapDom(a,b) {
+            let aParent = a.parentNode;
+            let bParent = b.parentNode;
+            let aHolder = document.createElement("div");
+            let bHolder = document.createElement("div");
+            aParent.replaceChild(aHolder, a);
+            bParent.replaceChild(bHolder, b);
+            aParent.replaceChild(b, aHolder);
+            bParent.replaceChild(a, bHolder);    
+        }    
     },
     closePuzzle: function(){
         //remove listeners

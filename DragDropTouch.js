@@ -353,6 +353,7 @@ var DragDropTouch;
                 this._imgOffset = { x: pt.x - rc.left, y: pt.y - rc.top };
                 this._img.style.opacity = DragDropTouch._OPACITY.toString();
                 this._img.style.boxShadow = 'inset 0 0 0 0px gold, 0 0 15px gold';
+                this._img.style.filter = '';
             }
             // add image to document
             this._moveImage(e);
@@ -441,7 +442,7 @@ var DragDropTouch;
     /*private*/ DragDropTouch._instance = new DragDropTouch(); // singleton
     // constants
     DragDropTouch._THRESHOLD = 5; // pixels to move before drag starts
-    DragDropTouch._OPACITY = 0.9; // drag image opacity
+    DragDropTouch._OPACITY = 0.85; // drag image opacity
     DragDropTouch._DBLCLICK = 500; // max ms between clicks in a double click
     DragDropTouch._CTXMENU = 900; // ms to hold before raising 'contextmenu' event
     DragDropTouch._ISPRESSHOLDMODE = false; // decides of press & hold mode presence
