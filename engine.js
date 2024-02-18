@@ -184,9 +184,36 @@ var puzzleManager = {
         return a.pathname + a.search + a.hash;
     },
     isPuzzleInWinningState: function() {  
+        var puzzlePieces = document.querySelectorAll('.puzzle-piece');  
+  
+        for (var i = 0; i < puzzlePieces.length; i++) {  
+            // Generate the expected ID for this position  
+            var expectedId = 'puzzle-piece-' + (i + 1);  
+      
+            // Check if the puzzle piece at this position has the expected ID  
+            if (puzzlePieces[i].id !== expectedId) {  
+                // If not, the puzzle is not in the winning state  
+                return false;  
+            }  
+
+            // check rotation
+            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate){
+                if (parseInt(puzzleManager.puzzlePieces[i].dataset.rotation) % 360 !== 0) {
+                    return false;
+                }
+            }
+        }  
+      
+        // If all puzzle pieces are in the correct position, the puzzle is in the winning state  
+        return true; 
+        
+        
+        
+        /*
+        
         for (var i = 0; i < puzzleManager.puzzlePieces.length; i++) {  
             // check order
-            //debugger;
+            //ebugger;
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
                 var x = (i) % puzzleManager.puzzleSizeColumns;    
                 var y = Math.floor((i) / puzzleManager.puzzleSizeColumns);  
@@ -211,7 +238,7 @@ var puzzleManager = {
                 }
             }
         }  
-        return true;  
+        return true;  */
     },  
     shufflePuzzle: function(){
         //remove listeners
@@ -240,10 +267,8 @@ var puzzleManager = {
         for (var i = 1; i <= puzzleManager.puzzlePiecesCount; i++) {
             var puzzlePiece = document.createElement('div');
             puzzlePiece.className = 'puzzle-piece';
+            puzzlePiece.id = 'puzzle-piece-' + i;  
             puzzlePiece.draggable = true;
-            puzzlePiece.addEventListener('dragstart', puzzleManager.dragStart);  
-            puzzlePiece.addEventListener('dragover', puzzleManager.dragOver);  
-            puzzlePiece.addEventListener('drop', puzzleManager.drop);  
 
             // Set image
             puzzlePiece.style.backgroundImage = `url(puzzles/${filename})`;
@@ -278,23 +303,120 @@ var puzzleManager = {
             var y = Math.floor((i) / puzzleManager.puzzleSizeColumns);  
             puzzleManager.puzzlePieces[i].style.backgroundPosition = '-' + (x * puzzleManager.puzzlePieceWidth + 1) + 'px -' + (y * puzzleManager.puzzlePieceHeight + 1) + 'px';  
         
-            console.log(i,x,y, puzzleManager.puzzlePieces[i].style.backgroundPosition);
+            //console.log(i,x,y, puzzleManager.puzzlePieces[i].style.backgroundPosition);
         }  
 
         // Shuffle
         if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
             puzzleManager.shufflePuzzlePieces();
         }
-        
-        // Add click event listeners to the puzzle pieces
-        for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
-            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate){
-              puzzleManager.puzzlePieces[j].addEventListener('click', puzzleManager.rotateListener);
-            }
-            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap ){
-              puzzleManager.puzzlePieces[j].addEventListener('click', puzzleManager.swapListener);
+
+
+
+
+/*--------------------------------------------------*/
+
+
+    // demonstrate standard HTML5 drag/drop.
+    // this is based on the html5rocks tutorial published here:
+    // http://www.html5rocks.com/en/tutorials/dnd/basics/
+
+    // hook up event handlers
+    let cols = document.querySelectorAll('.puzzle-piece');
+    [].forEach.call(cols, function (col) {
+        col.addEventListener('dragstart', handleDragStart, false);
+        col.addEventListener('dragenter', handleDragEnter, false)
+        col.addEventListener('dragover', handleDragOver, false);
+        col.addEventListener('dragleave', handleDragLeave, false);
+        col.addEventListener('drop', handleDrop, false);
+        col.addEventListener('dragend', handleDragEnd, false);
+    });
+
+    let dragSrcEl = null;
+    function handleDragStart(e) {
+
+/*
+        let stripes = document.createElement('style');  
+        stripes.innerHTML = `  
+            .striped-image::after {  
+                content: "";  
+                position: absolute;  
+                top: 0;  
+                right: 0;  
+                bottom: 0;  
+                left: 0;  
+                background: linear-gradient(45deg, rgba(255,255,255,.3) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.3) 50%, rgba(255,255,255,.3) 75%, transparent 75%, transparent);  
+                background-size: 50px 50px;  
+            }  
+            `; 
+*/
+
+        if (e.target.className.indexOf('puzzle-piece') > -1) {
+            dragSrcEl = e.target;
+            dragSrcEl.style.opacity = '0.5';
+            //dragSrcEl.appendChild(stripes);
+            let dt = e.dataTransfer;
+            dt.effectAllowed = 'move';
+            dt.setData('text', dragSrcEl.innerHTML);
+
+            // customize drag image for one of the panels
+            if (dt.setDragImage instanceof Function && e.target.innerHTML.indexOf('X') > -1) {
+                let img = new Image();
+                img.src = 'puzzles\boy.jpg';
+                dt.setDragImage(img, img.width / 2, img.height / 2);
             }
         }
+    }
+    function handleDragOver(e) {
+        if (dragSrcEl) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+    }
+    function handleDragEnter(e) {
+        if (dragSrcEl) {
+            e.target.classList.add('over');
+        }
+    }
+    function handleDragLeave(e) {
+        if (dragSrcEl) {
+            e.target.classList.remove('over');
+        }
+    }
+    function handleDragEnd(e) {
+        dragSrcEl = null;
+        [].forEach.call(cols, function (col) {
+            col.style.opacity = '';
+            col.classList.remove('over');
+        });
+    }
+    function handleDrop(e) {
+        if (dragSrcEl) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            if (dragSrcEl != this) {
+                swapDom(dragSrcEl, this);
+                //dragSrcEl.innerHTML = e.target.innerHTML;
+                //this.innerHTML = e.dataTransfer.getData('text');
+            }
+        }
+    }
+
+    // https://stackoverflow.com/questions/9732624/how-to-swap-dom-child-nodes-in-javascript
+    function swapDom(a,b) {
+        let aParent = a.parentNode;
+        let bParent = b.parentNode;
+        let aHolder = document.createElement("div");
+        let bHolder = document.createElement("div");
+        aParent.replaceChild(aHolder, a);
+        bParent.replaceChild(bHolder, b);
+        aParent.replaceChild(b, aHolder);
+        bParent.replaceChild(a, bHolder);    
+    }    
+/*--------------------------------------------------*/
+
+
     },
     closePuzzle: function(){
         //remove listeners
@@ -371,26 +493,6 @@ var puzzleManager = {
         for (var i = 0; i < puzzleManager.puzzlePieces.length; i++) {  
             puzzleManager.puzzlePieces[i].style.backgroundSize = imageWidth + 'px ' + imageHeight + 'px';  
         } 
-    },
-    dragStart: function(e) {  
-        e.dataTransfer.setData('text/plain', e.target.style.backgroundPosition);  
-        e.dataTransfer.effectAllowed = 'move';  
-    },  
-    dragOver: function(e) {  
-        e.preventDefault();  
-        e.dataTransfer.dropEffect = 'move';  
-    },  
-    drop: function(e) {  
-        e.preventDefault();  
-        var data = e.dataTransfer.getData('text');  
-        var from = document.querySelector(`[style*='${data}']`);  
-        from.style.backgroundPosition = e.target.style.backgroundPosition;  
-        e.target.style.backgroundPosition = data;  
-        
-        // Check win
-        if (puzzleManager.isPuzzleInWinningState()) {
-            puzzleManager.puzzleWin();
-        }
     },
 }
 
