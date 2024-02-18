@@ -1,0 +1,113 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Noto Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-user-drag: none;
+  user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.header {  
+  height: 50px; /* Adjust this value as needed */  
+  background-color: rgb(245, 169, 7);  
+  text-align: center;  
+  padding: 1px;  
+  width: 100%;  
+}  
+.content {  
+  max-width: 940px;
+  margin: 0 auto;  
+} 
+#puzzle-container {
+  display: grid;
+  gap: 0px;
+  margin: 0 auto;
+  background-color: black;
+  max-width: 940px;
+  width: 100%;  
+  /*outline: rgb(56, 122, 135) solid 6px;*/
+  margin-top: 1px;
+}
+.puzzle-piece {
+  position: relative;
+  box-sizing: border-box;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  line-height: 0;
+  transition: transform 0.3s;
+  perspective: 800px;
+}
+.puzzle-piece.selected {
+  border-color: red;
+}
+.puzzle-swapping {
+  transition: transform 0.3s;
+  animation: puzzleSwapAnimation 0.3s;
+}
+@keyframes puzzleSwapAnimation {
+  0% {
+      transform: scale(1);
+  }
+  50% {
+      transform: scale(0.9);
+  }
+  100% {
+      transform: scale(1);
+  }
+}
+.large-heart-animation {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+
+
+.header {  
+  display: flex;  
+  justify-content: space-between;  
+  align-items: center;  
+  padding: 10px 20px;  
+  background-color: #f8f8f8;  
+  box-shadow: 0px 2px 4px rgba(0,0,0,0.1);  
+}  
+.menu {  
+  display: flex;  
+  align-items: center;  
+  gap: 10px;  
+}  
+.title {  
+  font-size: 24px;  
+  font-weight: bold;  
+  color: #333;  
+}  
+.icon {  
+  background-color: #eee;  
+  border: none;  
+  padding: 10px;  
+  border-radius: 50%;  
+  cursor: pointer;  
+}  
+.icon:hover {  
+  background-color: #ddd;  
+}  
+.game-icon {  
+  display: inline-block;  
+  width: 20px;  
+  height: 20px;  
+}  

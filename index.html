@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>PUZZLICA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
+  <link rel="stylesheet" href="./puzzlica.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  
+
+
+  <div class="content">  
+    <div class="header">  
+      <div class="menu">
+        <button id="help-button" class="icon" aria-label="help">
+          <game-icon icon="help"></game-icon>
+        </button>
+      </div>
+      <div class="title">
+      PUZZLICA
+      </div>
+      <div class="menu">
+        <button id="statistics-button" class="icon" aria-label="statistics">
+          <game-icon icon="statistics"></game-icon>
+        </button>
+        <button id="settings-button" class="icon" aria-label="settings">
+          <game-icon icon="settings"></game-icon>
+        </button>
+      </div>
+    </div>
+    
+    <div id="puzzle-container" draggable="false"></div> 
+  </div>  
+
+  <div class="large-heart-animation">
+    <img id="large-heart-image" src="graphic/heart-green-full.png">
+  </div>
+
+<script src="./engine.js" type="module"></script>
+
+</body>
+</html>
