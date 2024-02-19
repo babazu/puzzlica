@@ -1,0 +1,19 @@
+{
+    "2024-02-19": { 
+        "id": 1,
+        "image": "1.jpg",
+        "type": "swap",
+        "seed": 12345,
+        "author": "author",
+        "desc": "desc"
+    },
+    "2024-02-20": { 
+        "id": 2,
+        "image": "2.jpg",
+        "type": "swap",
+        "seed": 12345,
+        "author": "author",
+        "desc": "desc"
+    }
+}
+

@@ -13,33 +13,44 @@
   <div class="content">  
     <div class="header">  
       <div class="menu">
-        <button id="help-button" class="icon" aria-label="help">
-          <game-icon icon="help"></game-icon>
+        <button id="buttonHelp" class="icon" aria-label="help" onclick="">
+          <i class="material-icons">info</i>
         </button>
-        <button id="help-button" class="icon" aria-label="help">
-          <game-icon icon="help"></game-icon>
+        <button id="buttonCalendar" class="icon" aria-label="calendar">
+          <i class="material-icons">calendar_month</i>
         </button>
       </div>
       <div class="title">
         PUZZLICA
       </div>
       <div class="menu">
-        <button id="statistics-button" class="icon" aria-label="statistics">
-          <game-icon icon="statistics"></game-icon>
+        <button id="buttonScore" class="icon" aria-label="statistics">
+          <i class="material-icons">emoji_events</i>
         </button>
-        <button id="settings-button" class="icon" aria-label="settings">
-          <game-icon icon="settings"></game-icon>
+        <button id="buttonSettings" class="icon" aria-label="settings">
+          <i class="material-icons">settings</i>
         </button>
       </div>
+    </div>
+
+    <div id="popupSettings" class="popup">
+      <button id="popupSettingsX" class="popupXButton">&times;</button>
+      <form id="lvlForm">  
+        <div class="lvlButton"><input type="radio" id="lvl2" name="choice" value="2"><label for="lvl2">simple</label></div>  
+        <div class="lvlButton"><input type="radio" id="lvl3" name="choice" value="3"><label for="lvl3">relaxed</label></div>  
+        <div class="lvlButton"><input type="radio" id="lvl4" name="choice" value="4"><label for="lvl4">easy</label></div>  
+        <div class="lvlButton"><input type="radio" id="lvl5" name="choice" value="5"><label for="lvl5">regular</label></div> 
+        <div class="lvlButton"><input type="radio" id="lvl6" name="choice" value="6"><label for="lvl6">hard</label></div>
+        <div class="lvlButton"><input type="radio" id="lvl7" name="choice" value="7"><label for="lvl7">challenging</label></div>
+        <div class="lvlButton"><input type="radio" id="lvl8" name="choice" value="8"><label for="lvl8">insane</label></div>
+      </form>
+
+
+
     </div>
     
     <div id="puzzle-container"></div> 
 
-    <div class="footer">
-      <div id="counter">
-        0
-      </div>
-    </div>
   </div>  
 
   <div class="large-heart-animation">
@@ -48,6 +59,6 @@
 
   <script src="./drag-drop-touch.min.js"></script>
   <script src="./engine.js" type="module"></script>
-  
+
 </body>
 </html>

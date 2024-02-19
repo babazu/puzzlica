@@ -68,11 +68,13 @@ body {
   color: #333;  
 }  
 .icon {  
-  background-color: #eee;  
-  border: none;  
-  padding: 10px;  
-  border-radius: 50%;  
-  cursor: pointer;  
+  background-color: #fff0;
+  border: none;
+  padding-top: 7px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 27px;
+  color: rgb(53, 53, 53);
 }  
 .icon:hover {  
   background-color: #ddd;  
@@ -113,3 +115,58 @@ body {
   align-items: center;
   overflow: hidden;
 }
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(graphic/material-icons.woff2) format('woff2');
+}
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+.popup {
+  width: 96%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow: hidden;
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 2);
+  z-index: 10010;
+  color: #814e03;
+  border-radius: 8px;
+  /*background-image: url('graphic/wallpaper-light2.jpg');*/
+}
+.popupXButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 25px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.lvlButton {  
+  padding-bottom: 15px;  
+}  
+.lvlButton label{  
+  padding-left: 10px;
+}  

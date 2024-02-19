@@ -1,4 +1,6 @@
 import { puzzles } from './puzzles.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
 let mouseX = 0;
 let mouseY = 0;
@@ -6,10 +8,44 @@ let mouseY = 0;
 document.addEventListener("DOMContentLoaded", init);
 
 function init(){
+
+    engineManager.initListeners();
+
+    let date = dbManager.getToday();
+
     // PALIM PUZZLE
-    puzzleManager.startPuzzleGame("15_BorelliM", puzzleManager.PuzzleType.Swap) 
+    let puzzle = dbManager.loadPuzzle("2024-02-19");
+    puzzleManager.startPuzzleGame(date, puzzle.id, puzzle.image, 4, 2, puzzleManager.PuzzleType.Swap) 
 }
 
+// responsible for communication between ui and engine
+var engineManager = {
+    stateLevel: 2,
+    initListeners: function(){
+        
+        // settings
+        document.getElementById("buttonSettings").addEventListener("click", function() {
+            document.getElementById("popupSettings").style.display = "block";
+        });
+        document.getElementById("popupSettingsX").addEventListener("click", function() {
+            document.getElementById("popupSettings").style.display = "none";
+        });
+        document.getElementById("lvl2").addEventListener("click", function() {engineManager.setLevel(2);});
+        document.getElementById("lvl3").addEventListener("click", function() {engineManager.setLevel(3);});
+        document.getElementById("lvl4").addEventListener("click", function() {engineManager.setLevel(4);});
+        document.getElementById("lvl5").addEventListener("click", function() {engineManager.setLevel(5);});
+        document.getElementById("lvl6").addEventListener("click", function() {engineManager.setLevel(6);});
+        document.getElementById("lvl7").addEventListener("click", function() {engineManager.setLevel(7);});
+        document.getElementById("lvl8").addEventListener("click", function() {engineManager.setLevel(8);});
+    },
+    setLevel: function (level) {  
+        engineManager.stateLevel = level;
+        let row = 2 * level;
+        let column = level;
+        console.log('level: ' + level);  
+        puzzleManager.startPuzzleGame(puzzleManager.date, puzzleManager.puzzleId, puzzleManager.puzzleImage, row, column, puzzleManager.puzzleType) 
+    }
+};
 
 var animationManager = {
     animateWin: function(){
@@ -90,26 +126,28 @@ var puzzleManager = {
     puzzlePieceHeight: 0,
     dragSrcEl: null,
     counter: 0,
+    puzzleImage: null,
     
-    startPuzzleGame: function(puzzleId, puzzleType) {
+    startPuzzleGame: function(puzzleDate, puzzleId, puzzleImage, rows, columns, puzzleType) {
         console.log("starting puzzle:", puzzleId);
 
         var puzzle = puzzles[puzzleId];
         puzzleManager.puzzlePieces = [];
-        puzzleManager.puzzleId = puzzle.key;
+        puzzleManager.puzzleId = puzzleId;
         puzzleManager.puzzleType = puzzleType;
-        puzzleManager.puzzlePiecesCount = puzzle.columns * puzzle.rows;
-        puzzleManager.puzzleSizeRows = puzzle.rows;
-        puzzleManager.puzzleSizeColumns = puzzle.columns;
+        puzzleManager.puzzlePiecesCount = columns * rows;
+        puzzleManager.puzzleSizeRows = rows;
+        puzzleManager.puzzleSizeColumns = columns;
+        puzzleManager.puzzleImage = puzzleImage;
 
        var container = document.getElementById('puzzle-container');
 
         // Set the grid-template-columns and grid-template-rows CSS properties
-        container.style.gridTemplateColumns = `repeat(${puzzle.columns}, 1fr)`;
-        container.style.gridTemplateRows = `repeat(${puzzle.rows}, 1fr)`;
+        container.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+        container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
 
         // create pieces
-        puzzleManager.shufflePuzzle();
+        puzzleManager.loadPuzzle(puzzleImage);
     },
     rotateListener: function(e) {
         e.preventDefault(); // Prevent the default context menu behavior
@@ -171,7 +209,9 @@ var puzzleManager = {
         // If all puzzle pieces are in the correct position, the puzzle is in the winning state  
         return true; 
     },  
-    shufflePuzzle: function(){
+    loadPuzzle: function(filename){
+        console.log('loadPuzzle',filename);
+
         //remove listeners
         for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate) {
@@ -185,12 +225,6 @@ var puzzleManager = {
             container.removeChild(container.firstChild);
         }
         puzzleManager.puzzlePieces.length = 0;
-
-        // get image based on current date
-        const currentDate = new Date();  
-        const currentUTCDate = currentDate.toISOString().split('T')[0];  
-        const filename = currentUTCDate + '.jpg';   
-        console.log('image',filename);
 
         // Create the puzzle pieces and add them to the container
         for (var i = 1; i <= puzzleManager.puzzlePiecesCount; i++) {
@@ -231,8 +265,6 @@ var puzzleManager = {
             var x = (i) % puzzleManager.puzzleSizeColumns;  
             var y = Math.floor((i) / puzzleManager.puzzleSizeColumns);  
             puzzleManager.puzzlePieces[i].style.backgroundPosition = '-' + (x * puzzleManager.puzzlePieceWidth + 1) + 'px -' + (y * puzzleManager.puzzlePieceHeight + 1) + 'px';  
-        
-            //console.log(i,x,y, puzzleManager.puzzlePieces[i].style.backgroundPosition);
         }  
 
         // Shuffle
@@ -298,8 +330,7 @@ var puzzleManager = {
                 puzzleManager.swapPieces(puzzleManager.dragSrcEl, this);
                 puzzleManager.counter++;
             }
-            document.getElementById('counter').innerText = puzzleManager.counter;
-            
+
             // Check win
             if (puzzleManager.isPuzzleInWinningState()) {
                 puzzleManager.puzzleWin();
@@ -388,6 +419,24 @@ var puzzleManager = {
             puzzleManager.puzzlePieces[i].style.backgroundSize = imageWidth + 'px ' + imageHeight + 'px';  
         } 
     },
+};
+
+var dbManager = {
+    
+    getToday: function(){
+        const currentDate = new Date();  
+        const currentUTCDate = currentDate.toISOString().split('T')[0];  
+        return currentUTCDate;
+    },
+    loadPuzzle: function(date){
+        const filename = date + '.jpg';
+
+        var puzzle = puzzles[date];
+
+        return puzzle;
+
+    }
 }
+
 
 
