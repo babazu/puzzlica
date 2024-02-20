@@ -14,8 +14,8 @@ function init(){
     let date = dbManager.getToday();
 
     // PALIM PUZZLE
-    let puzzle = dbManager.loadPuzzle("2024-02-19");
-    puzzleManager.startPuzzleGame(date, puzzle.id, puzzle.image, 4, 2, puzzleManager.PuzzleType.Swap) 
+    let puzzle = dbManager.loadPuzzle("2024-02-20");
+    puzzleManager.startPuzzleGame(date, puzzle.id, puzzle.image, 4, puzzleManager.PuzzleType.Swap) 
 }
 
 // responsible for communication between ui and engine
@@ -30,6 +30,7 @@ var engineManager = {
         document.getElementById("popupSettingsX").addEventListener("click", function() {
             document.getElementById("popupSettings").style.display = "none";
         });
+        document.getElementById("lvl1").addEventListener("click", function() {engineManager.setLevel(1);});
         document.getElementById("lvl2").addEventListener("click", function() {engineManager.setLevel(2);});
         document.getElementById("lvl3").addEventListener("click", function() {engineManager.setLevel(3);});
         document.getElementById("lvl4").addEventListener("click", function() {engineManager.setLevel(4);});
@@ -37,13 +38,13 @@ var engineManager = {
         document.getElementById("lvl6").addEventListener("click", function() {engineManager.setLevel(6);});
         document.getElementById("lvl7").addEventListener("click", function() {engineManager.setLevel(7);});
         document.getElementById("lvl8").addEventListener("click", function() {engineManager.setLevel(8);});
+        document.getElementById('lvl4').checked = true; //default
+
     },
     setLevel: function (level) {  
         engineManager.stateLevel = level;
-        let row = 2 * level;
-        let column = level;
         console.log('level: ' + level);  
-        puzzleManager.startPuzzleGame(puzzleManager.date, puzzleManager.puzzleId, puzzleManager.puzzleImage, row, column, puzzleManager.puzzleType) 
+        puzzleManager.startPuzzleGame(puzzleManager.date, puzzleManager.puzzleId, puzzleManager.puzzleImage, level, puzzleManager.puzzleType) 
     }
 };
 
@@ -128,23 +129,24 @@ var puzzleManager = {
     counter: 0,
     puzzleImage: null,
     
-    startPuzzleGame: function(puzzleDate, puzzleId, puzzleImage, rows, columns, puzzleType) {
+    startPuzzleGame: function(puzzleDate, puzzleId, puzzleImage, level, puzzleType) {
         console.log("starting puzzle:", puzzleId);
+        puzzleManager.counter = 0;
+        document.getElementById("counter").innerHTML = puzzleManager.counter;
 
-        var puzzle = puzzles[puzzleId];
         puzzleManager.puzzlePieces = [];
         puzzleManager.puzzleId = puzzleId;
         puzzleManager.puzzleType = puzzleType;
-        puzzleManager.puzzlePiecesCount = columns * rows;
-        puzzleManager.puzzleSizeRows = rows;
-        puzzleManager.puzzleSizeColumns = columns;
+        puzzleManager.puzzleSizeRows = 2 * level;
+        puzzleManager.puzzleSizeColumns = level;
+        puzzleManager.puzzlePiecesCount = puzzleManager.puzzleSizeRows * puzzleManager.puzzleSizeColumns;
         puzzleManager.puzzleImage = puzzleImage;
 
        var container = document.getElementById('puzzle-container');
 
         // Set the grid-template-columns and grid-template-rows CSS properties
-        container.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-        container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        container.style.gridTemplateColumns = `repeat(${puzzleManager.puzzleSizeColumns}, 1fr)`;
+        container.style.gridTemplateRows = `repeat(${puzzleManager.puzzleSizeRows}, 1fr)`;
 
         // create pieces
         puzzleManager.loadPuzzle(puzzleImage);
@@ -230,6 +232,19 @@ var puzzleManager = {
         for (var i = 1; i <= puzzleManager.puzzlePiecesCount; i++) {
             var puzzlePiece = document.createElement('div');
             puzzlePiece.className = 'puzzle-piece';
+            if (i <= puzzleManager.puzzleSizeColumns){
+                puzzlePiece.className += ' border-top';
+            }
+            if (i >= puzzleManager.puzzlePiecesCount - puzzleManager.puzzleSizeColumns + 1){
+                puzzlePiece.className += ' border-bottom';
+            }
+            if ((i + 1) % puzzleManager.puzzleSizeColumns == 1 || puzzleManager.puzzlePiecesCount ==2){
+                puzzlePiece.className += ' border-right';
+            }
+            if (i % puzzleManager.puzzleSizeColumns == 1 || puzzleManager.puzzlePiecesCount == 2){
+                puzzlePiece.className += ' border-left';
+            }
+            
             puzzlePiece.id = 'puzzle-piece-' + i;  
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
                 puzzlePiece.draggable = true;
@@ -264,7 +279,16 @@ var puzzleManager = {
             // Calculate the position of the current piece in the image  
             var x = (i) % puzzleManager.puzzleSizeColumns;  
             var y = Math.floor((i) / puzzleManager.puzzleSizeColumns);  
-            puzzleManager.puzzlePieces[i].style.backgroundPosition = '-' + (x * puzzleManager.puzzlePieceWidth + 1) + 'px -' + (y * puzzleManager.puzzlePieceHeight + 1) + 'px';  
+            var border_x = 0;
+            var border_y = 0;
+            // pomaknem 10 px ispod bordera
+            if ((i + 1) <= puzzleManager.puzzleSizeColumns){
+                border_y = 10;
+            }
+            if ((i + 1) % puzzleManager.puzzleSizeColumns == 1){
+                border_x = 10;
+            }
+            puzzleManager.puzzlePieces[i].style.backgroundPosition = '-' + (x * puzzleManager.puzzlePieceWidth + border_x + 1) + 'px -' + (y * puzzleManager.puzzlePieceHeight + border_y + 1) + 'px';  
         }  
 
         // Shuffle
@@ -279,8 +303,7 @@ var puzzleManager = {
             }
         }
         if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
-            // DragDropTouch
-            [].forEach.call(puzzleManager.puzzlePieces, function (col) {
+             [].forEach.call(puzzleManager.puzzlePieces, function (col) {
                 col.addEventListener('dragstart', puzzleManager.dragStart, false);
                 col.addEventListener('dragenter', puzzleManager.dragEnter, false)
                 col.addEventListener('dragover', puzzleManager.dragOver, false);
@@ -304,7 +327,7 @@ var puzzleManager = {
         }
     },
     dragEnter: function(e) {
-        if (puzzleManager.dragSrcEl) {
+        if (puzzleManager.dragSrcEl && e.target.draggable == true) {
             e.target.classList.add('over');
         }
     },
@@ -326,14 +349,45 @@ var puzzleManager = {
             e.stopPropagation();
             e.stopImmediatePropagation();
             e.preventDefault();
-            if (puzzleManager.dragSrcEl != this) {
+            if (puzzleManager.dragSrcEl != this && this.draggable == true) {
                 puzzleManager.swapPieces(puzzleManager.dragSrcEl, this);
+                // count
                 puzzleManager.counter++;
-            }
+                document.getElementById("counter").innerHTML = puzzleManager.counter;
+                
+                
+                
+                
+                
+                
+                // TOD OOVO NE VALJA
+                
+                var puzzlePieces = document.querySelectorAll('.puzzle-piece');
+                console.log(puzzlePieces);
+                // provjeri jel piece na pravom mjestu. ako je lockamo ga.
+                var position = -1;  
+                for (var i = 0; i < puzzlePieces.length; i++) {  
+                    if (puzzlePieces[i].id === puzzleManager.dragSrcEl.id) {  
+                        position = i+1;  
+                        break;  
+                    }  
+                } 
 
-            // Check win
-            if (puzzleManager.isPuzzleInWinningState()) {
-                puzzleManager.puzzleWin();
+
+
+
+                console.log('test',puzzleManager.dragSrcEl.id,position);
+
+                if (puzzleManager.dragSrcEl.id == 'puzzle-piece-' + position){
+                    console.log('lock');
+                    puzzleManager.dragSrcEl.draggable = false;
+                    puzzleManager.dragSrcEl.className += ' puzzle-piece-locked';
+                }
+
+                // Check win
+                if (puzzleManager.isPuzzleInWinningState()) {
+                    puzzleManager.puzzleWin();
+                }
             }
         }
     },
@@ -353,12 +407,15 @@ var puzzleManager = {
             if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Rotate) {
                 puzzleManager.puzzlePieces[j].removeEventListener('click', puzzleManager.rotateListener);
             }
-        }
-
-        //remove images from container
-        var container = document.getElementById('puzzle-container');
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
+            if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap) {
+                puzzleManager.puzzlePieces[j].removeEventListener('dragstart', puzzleManager.dragStart);
+                puzzleManager.puzzlePieces[j].removeEventListener('dragenter', puzzleManager.dragEnter)
+                puzzleManager.puzzlePieces[j].removeEventListener('dragover', puzzleManager.dragOver);
+                puzzleManager.puzzlePieces[j].removeEventListener('dragleave', puzzleManager.dragLeave);
+                puzzleManager.puzzlePieces[j].removeEventListener('drop', puzzleManager.dragDrop);
+                puzzleManager.puzzlePieces[j].removeEventListener('dragend', puzzleManager.dragEnd);
+                puzzleManager.puzzlePieces[j].draggable = false;
+            }
         }
     },
     puzzleWin: function(){
@@ -373,19 +430,13 @@ var puzzleManager = {
 
         setTimeout(function() {
             animationManager.animateBigHeart();
-
             setTimeout(function() {
-                //remove images from container
-                var container = document.getElementById('puzzle-container');
-                while (container.firstChild) {
-                    container.removeChild(container.firstChild);
-                }
-                puzzleManager.puzzlePieces.length = 0;
                 puzzleManager.closePuzzle();
             }, 500); // dok traje takeover animacija prebaci screen
         }, 500); // paljenje takeover animacije
     },
     updatePuzzlePieceSizes: function() {
+        // TOFOD RADI LI OVO IŠTA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         var puzzlePieces = document.querySelectorAll('.puzzle-piece img');
 
         var innerWidth = window.innerWidth;
