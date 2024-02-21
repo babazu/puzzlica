@@ -11,10 +11,13 @@ function init(){
 
     engineManager.initListeners();
 
-    let date = dbManager.getToday();
+    let date = dbManager.getToday().toString().slice(0,10);
+    
+    // DEBUG - fake that today is 2024-03-08
+    date = "2024-03-08";
 
     // PALIM PUZZLE
-    let puzzle = dbManager.loadPuzzle("2024-02-20");
+    let puzzle = dbManager.loadPuzzle(date);
     puzzleManager.startPuzzleGame(date, puzzle.id, puzzle.image, 4, puzzleManager.PuzzleType.Swap) 
 }
 
@@ -23,13 +26,15 @@ var engineManager = {
     stateLevel: 2,
     initListeners: function(){
         
+        // calendar
+        document.getElementById("buttonCalendar").addEventListener("click", function() {document.getElementById("popupCalendar").style.display = "block";});
+        document.getElementById("popupCalendarX").addEventListener("click", function() {document.getElementById("popupCalendar").style.display = "none";});
+        document.getElementById("buttonPrevious").addEventListener("click", function() {engineManager.setPrevousDay();});
+        document.getElementById("buttonNext").addEventListener("click", function() {engineManager.setNextDay();});
+
         // settings
-        document.getElementById("buttonSettings").addEventListener("click", function() {
-            document.getElementById("popupSettings").style.display = "block";
-        });
-        document.getElementById("popupSettingsX").addEventListener("click", function() {
-            document.getElementById("popupSettings").style.display = "none";
-        });
+        document.getElementById("buttonSettings").addEventListener("click", function() {document.getElementById("popupSettings").style.display = "block";});
+        document.getElementById("popupSettingsX").addEventListener("click", function() {document.getElementById("popupSettings").style.display = "none";});
         document.getElementById("lvl1").addEventListener("click", function() {engineManager.setLevel(1);});
         document.getElementById("lvl2").addEventListener("click", function() {engineManager.setLevel(2);});
         document.getElementById("lvl3").addEventListener("click", function() {engineManager.setLevel(3);});
@@ -38,14 +43,31 @@ var engineManager = {
         document.getElementById("lvl6").addEventListener("click", function() {engineManager.setLevel(6);});
         document.getElementById("lvl7").addEventListener("click", function() {engineManager.setLevel(7);});
         document.getElementById("lvl8").addEventListener("click", function() {engineManager.setLevel(8);});
-        document.getElementById('lvl4').checked = true; //default
+        //default lvl
+        document.getElementById('lvl4').checked = true; 
 
     },
     setLevel: function (level) {  
         engineManager.stateLevel = level;
         console.log('level: ' + level);  
-        puzzleManager.startPuzzleGame(puzzleManager.date, puzzleManager.puzzleId, puzzleManager.puzzleImage, level, puzzleManager.puzzleType) 
-    }
+        puzzleManager.startPuzzleGame(puzzleManager.puzzleDate, puzzleManager.puzzleId, puzzleManager.puzzleImage, level, puzzleManager.puzzleType) 
+    },
+    setPrevousDay: function(){
+        var d = new Date(puzzleManager.puzzleDate);  
+        d.setDate(d.getDate() - 1);  
+        var newDate = d.toISOString().slice(0,10);
+        // load
+        let puzzle = dbManager.loadPuzzle(newDate);
+        puzzleManager.startPuzzleGame(newDate, puzzle.id, puzzle.image, puzzleManager.puzzleSizeColumns, puzzleManager.PuzzleType.Swap) 
+    },
+    setNextDay: function(){
+        var d = new Date(puzzleManager.puzzleDate);  
+        d.setDate(d.getDate() + 1);  
+        var newDate = d.toISOString().slice(0,10);
+        // load
+        let puzzle = dbManager.loadPuzzle(newDate);
+        puzzleManager.startPuzzleGame(newDate, puzzle.id, puzzle.image, puzzleManager.puzzleSizeColumns, puzzleManager.PuzzleType.Swap) 
+    }   
 };
 
 var animationManager = {
@@ -128,6 +150,7 @@ var puzzleManager = {
     dragSrcEl: null,
     counter: 0,
     puzzleImage: null,
+    puzzleDate: null,
     
     startPuzzleGame: function(puzzleDate, puzzleId, puzzleImage, level, puzzleType) {
         console.log("starting puzzle:", puzzleId);
@@ -141,6 +164,7 @@ var puzzleManager = {
         puzzleManager.puzzleSizeColumns = level;
         puzzleManager.puzzlePiecesCount = puzzleManager.puzzleSizeRows * puzzleManager.puzzleSizeColumns;
         puzzleManager.puzzleImage = puzzleImage;
+        puzzleManager.puzzleDate = puzzleDate;
 
        var container = document.getElementById('puzzle-container');
 
@@ -149,7 +173,7 @@ var puzzleManager = {
         container.style.gridTemplateRows = `repeat(${puzzleManager.puzzleSizeRows}, 1fr)`;
 
         // create pieces
-        puzzleManager.loadPuzzle(puzzleImage);
+        puzzleManager.startPuzzle(puzzleImage);
     },
     rotateListener: function(e) {
         e.preventDefault(); // Prevent the default context menu behavior
@@ -211,8 +235,8 @@ var puzzleManager = {
         // If all puzzle pieces are in the correct position, the puzzle is in the winning state  
         return true; 
     },  
-    loadPuzzle: function(filename){
-        console.log('loadPuzzle',filename);
+    startPuzzle: function(filename){
+        console.log('startPuzzle',filename);
 
         //remove listeners
         for (var j = 0; j < puzzleManager.puzzlePieces.length; j++) {
@@ -294,6 +318,11 @@ var puzzleManager = {
         // Shuffle
         if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
             puzzleManager.shufflePuzzlePieces();
+
+            // ponovi ako je u win stanju, da user ima što rješavati.
+            while (puzzleManager.isPuzzleInWinningState()) {  
+                puzzleManager.shufflePuzzlePieces();  
+            }  
         }
 
         // Add click event listeners to the puzzle pieces (for rotation it's click, for swap it's drag-drop)
@@ -303,13 +332,16 @@ var puzzleManager = {
             }
         }
         if (puzzleManager.puzzleType == puzzleManager.PuzzleType.Swap){
-             [].forEach.call(puzzleManager.puzzlePieces, function (col) {
-                col.addEventListener('dragstart', puzzleManager.dragStart, false);
-                col.addEventListener('dragenter', puzzleManager.dragEnter, false)
-                col.addEventListener('dragover', puzzleManager.dragOver, false);
-                col.addEventListener('dragleave', puzzleManager.dragLeave, false);
-                col.addEventListener('drop', puzzleManager.dragDrop, false);
-                col.addEventListener('dragend', puzzleManager.dragEnd, false);
+             [].forEach.call(puzzleManager.puzzlePieces, function (piece) {
+                piece.addEventListener('dragstart', puzzleManager.dragStart, false);
+                piece.addEventListener('dragenter', puzzleManager.dragEnter, false)
+                piece.addEventListener('dragover', puzzleManager.dragOver, false);
+                piece.addEventListener('dragleave', puzzleManager.dragLeave, false);
+                piece.addEventListener('drop', puzzleManager.dragDrop, false);
+                piece.addEventListener('dragend', puzzleManager.dragEnd, false);
+                
+                //odmah provjeri lockane i jel možda već pobjeda
+                puzzleManager.checkShouldLockPiece(piece);
             });
         }
     },
@@ -355,40 +387,31 @@ var puzzleManager = {
                 puzzleManager.counter++;
                 document.getElementById("counter").innerHTML = puzzleManager.counter;
                 
-                
-                
-                
-                
-                
-                // TOD OOVO NE VALJA
-                
-                var puzzlePieces = document.querySelectorAll('.puzzle-piece');
-                console.log(puzzlePieces);
-                // provjeri jel piece na pravom mjestu. ako je lockamo ga.
-                var position = -1;  
-                for (var i = 0; i < puzzlePieces.length; i++) {  
-                    if (puzzlePieces[i].id === puzzleManager.dragSrcEl.id) {  
-                        position = i+1;  
-                        break;  
-                    }  
-                } 
-
-
-
-
-                console.log('test',puzzleManager.dragSrcEl.id,position);
-
-                if (puzzleManager.dragSrcEl.id == 'puzzle-piece-' + position){
-                    console.log('lock');
-                    puzzleManager.dragSrcEl.draggable = false;
-                    puzzleManager.dragSrcEl.className += ' puzzle-piece-locked';
-                }
+                // Lockanje točno pozicioniranog piecea
+                puzzleManager.checkShouldLockPiece(puzzleManager.dragSrcEl);
+                puzzleManager.checkShouldLockPiece(this);
 
                 // Check win
                 if (puzzleManager.isPuzzleInWinningState()) {
                     puzzleManager.puzzleWin();
                 }
             }
+        }
+    },
+    checkShouldLockPiece: function(piece){
+        var puzzlePieces = document.querySelectorAll('.puzzle-piece');
+        // dohvati poziciju piecea
+        var position = -1;  
+        for (var i = 0; i < puzzlePieces.length; i++) {  
+            if (puzzlePieces[i].id === piece.id) {  
+                position = i+1;  
+                break;  
+            }  
+        } 
+        // lockaj piece ako pozicija valja
+        if (piece.id == 'puzzle-piece-' + position){
+            piece.draggable = false;
+            piece.className += ' puzzle-piece-locked';
         }
     },
     swapPieces: function(a,b) {
@@ -480,14 +503,11 @@ var dbManager = {
         return currentUTCDate;
     },
     loadPuzzle: function(date){
-        const filename = date + '.jpg';
-
         var puzzle = puzzles[date];
-
         return puzzle;
-
     }
 }
+
 
 
 
